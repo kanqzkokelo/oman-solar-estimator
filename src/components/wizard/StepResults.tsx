@@ -3,14 +3,14 @@
 import { useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import type { SolarEstimate } from "@/lib/solar/calculator";
+import type { SolarEstimate, SolarInputs } from "@/lib/solar/calculator";
 import { MonthlyEnergyChart } from "@/components/charts/MonthlyEnergyChart";
 import { SavingsChart } from "@/components/charts/SavingsChart";
 import { SdgBadges } from "@/components/sdg/SdgBadges";
 import { Callout, ProgressBar } from "@/components/ui";
 import { Reveal, CountUp } from "@/components/anim";
 import { STORAGE_KEY } from "@/types";
-import { getGovernorate, type Orientation } from "@/lib/solar/constants";
+import { getGovernorate } from "@/lib/solar/constants";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const SolarScene = dynamic(
@@ -19,7 +19,7 @@ const SolarScene = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="grid h-[340px] w-full place-items-center rounded-3xl bg-[#04070d] sm:h-[400px]">
+      <div className="grid h-[380px] w-full place-items-center rounded-3xl bg-[#04070d] sm:h-[440px]">
         <span className="mx-auto block h-7 w-7 animate-spin rounded-full border-2 border-solar-400 border-t-transparent" />
       </div>
     ),
@@ -30,10 +30,12 @@ export function StepResults({
   estimate,
   onBack,
   onReset,
+  onUpdateInputs,
 }: {
   estimate: SolarEstimate;
   onBack: () => void;
   onReset: () => void;
+  onUpdateInputs: (patch: Partial<SolarInputs>) => void;
 }) {
   const router = useRouter();
   const { t, isAr, fmtInt, fmtOmr, fmtPct, fmtTons, fmtYears } = useLanguage();
@@ -78,15 +80,6 @@ export function StepResults({
     }
   };
 
-  const getSoilingLabel = (key: string) => {
-    switch (key) {
-      case "low": return t("soilingLow");
-      case "medium": return t("soilingMedium");
-      case "high": return t("soilingHigh");
-      default: return key;
-    }
-  };
-
   const downloadReport = useCallback(() => {
     try {
       localStorage.setItem(
@@ -103,15 +96,6 @@ export function StepResults({
     e.annualBillWithoutOmr > 0
       ? Math.min(100, (e.annualSavingsOmr / e.annualBillWithoutOmr) * 100)
       : 0;
-
-  const lossItems = [
-    { key: "temperaturePct" as const, label: t("lossTemp"), color: "bg-orange-400" },
-    { key: "soilingPct" as const, label: t("lossSoiling"), color: "bg-amber-400" },
-    { key: "inverterPct" as const, label: t("lossInverter"), color: "bg-sky-400" },
-    { key: "wiringPct" as const, label: t("lossWiring"), color: "bg-indigo-400" },
-    { key: "shadingPct" as const, label: t("lossShading"), color: "bg-violet-400" },
-    { key: "otherPct" as const, label: t("lossOther"), color: "bg-dune-400" },
-  ];
 
   return (
     <div className="space-y-8">
@@ -141,7 +125,49 @@ export function StepResults({
         </Callout>
       )}
 
-      {/* 3D live model */}
+      {/* Live What-If Engineering Sandbox Bar */}
+      <div className="card flex flex-wrap items-center justify-between gap-4 p-4">
+        <div>
+          <p className="text-xs font-bold text-dune-900 dark:text-dune-100">⚡ {isAr ? "شريط محاكاة الهندسة الحية (What-If)" : "Live EPC Sensitivity Sandbox"}</p>
+          <p className="text-[11px] text-dune-500">{isAr ? "اختبر سعة البطاريات وتراكم الغبار مباشرة على النتائج" : "Test battery storage and dust maintenance live on results"}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="text-dune-500 font-medium">{isAr ? "البطارية (LFP):" : "Battery (LFP):"}</span>
+            {[0, 5, 10, 15].map((kwh) => (
+              <button
+                key={kwh}
+                onClick={() => onUpdateInputs({ batteryKwh: kwh })}
+                className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+                  (e.inputs.batteryKwh ?? 0) === kwh
+                    ? "bg-solar-500 text-dune-950 shadow-sm"
+                    : "bg-dune-200/60 dark:bg-dune-800 text-dune-700 dark:text-dune-300 hover:bg-dune-300/60 dark:hover:bg-dune-700"
+                }`}
+              >
+                {kwh === 0 ? (isAr ? "بدون" : "None") : `${kwh} ${isAr ? "ك.و.س" : "kWh"}`}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="text-dune-500 font-medium">{isAr ? "الغبار:" : "Dust:"}</span>
+            {(["low", "medium", "high"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => onUpdateInputs({ soiling: s })}
+                className={`rounded-lg px-2.5 py-1 text-xs font-semibold uppercase transition ${
+                  e.inputs.soiling === s
+                    ? "bg-leaf-600 text-white shadow-sm"
+                    : "bg-dune-200/60 dark:bg-dune-800 text-dune-700 dark:text-dune-300 hover:bg-dune-300/60 dark:hover:bg-dune-700"
+                }`}
+              >
+                {s === "low" ? (isAr ? "منخفض" : "Low") : s === "medium" ? (isAr ? "متوسط" : "Med") : (isAr ? "مرتفع" : "High")}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 3D live model with Hour Scrubber */}
       <Reveal y={8}>
         <SolarScene
           data={{
@@ -245,37 +271,27 @@ export function StepResults({
                 </div>
               ))}
             </dl>
-            <p className="mt-3 text-[11px] leading-relaxed text-dune-400 dark:text-dune-500">
-              {t("financialsFootnote")
-                .replace("{escalation}", fmtPct(e.inputs.tariffEscalation * 100, 1))
-                .replace("{netMeteringNote}", e.inputs.netMetering ? t("netMeteringYes") : t("netMeteringNo"))}
-            </p>
           </div>
 
-          {/* Losses */}
+          {/* EPC Engineering Specs Card */}
           <div className="card p-5">
-            <h3 className="mb-1 text-sm font-bold text-dune-900 dark:text-dune-100">
-              {t("performanceRatioTitle")} {fmtPct(e.performanceRatio * 100)}
-            </h3>
-            <p className="mb-3 text-xs text-dune-500 dark:text-dune-400">
-              {t("totalLossesSub").replace("{pct}", fmtPct(e.losses.totalPct * 100))}
-            </p>
-            <div className="space-y-2.5">
-              {lossItems.map(({ key, label, color }) => (
-                <div key={key}>
-                  <div className="mb-1 flex justify-between text-[11px]">
-                    <span className="text-dune-600 dark:text-dune-300">{label}</span>
-                    <span className="font-bold text-dune-800 dark:text-dune-100">{fmtPct((e.losses[key] as number) * 100)}</span>
-                  </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-dune-100 dark:bg-dune-800">
-                    <div className={`h-full rounded-full ${color}`} style={{ width: `${Math.min(100, (e.losses[key] as number) * 100)}%` }} />
-                  </div>
+            <h3 className="mb-1 text-sm font-bold text-dune-900 dark:text-dune-100">🏗️ {isAr ? "المواصفات الهندسية (EPC Specs)" : "EPC Engineering Specs"}</h3>
+            <p className="mb-3 text-xs text-dune-500">{isAr ? "قدرة المحول وتوزيع السلاسل ومخطط الخط الأحادي (SLD)" : "Inverter sizing, strings & SLD parameters"}</p>
+            <dl className="space-y-2.5 text-sm">
+              {[
+                [isAr ? "قدرة المحول العاكس (AC)" : "Inverter AC Rating", `${e.epc.inverterKwAc} kW AC`],
+                [isAr ? "نسبة تحجيم DC إلى AC" : "DC:AC Sizing Ratio", `${e.epc.dcAcRatio} : 1`],
+                [isAr ? "توزيع السلاسل (Strings)" : "String Configuration", isAr ? `${e.epc.stringsCount} سلاسل × ${e.epc.panelsPerString} ألواح` : `${e.epc.stringsCount} strings × ${e.epc.panelsPerString} panels`],
+                [isAr ? "الاستهلاك الذاتي المباشر" : "Daytime Self-Consumption", `${e.epc.directSelfConsumptionPct}%`],
+                [isAr ? "سعة تخزين البطاريات (LFP)" : "Battery Storage (LFP)", e.epc.batteryKwh > 0 ? `${e.epc.batteryKwh} kWh (${fmtOmr(e.epc.batteryCapexOmr, 0)})` : (isAr ? "غير مشمولة" : "Not included")],
+                [isAr ? "درجة الحرارة القصوى للبيئة" : "Peak Ambient Temp", `${Math.max(...gov.monthlyTempsC)}°C (${gov.name})`],
+              ].map(([k, v]) => (
+                <div key={k} className="flex items-baseline justify-between gap-3 border-b border-dune-100 pb-2 last:border-0 dark:border-dune-800">
+                  <dt className="text-xs text-dune-500 dark:text-dune-400">{k}</dt>
+                  <dd className={`text-sm font-bold text-leaf-700 dark:text-leaf-300 ${isAr ? "text-left" : "text-right"}`}>{v}</dd>
                 </div>
               ))}
-            </div>
-            <p className="mt-3 text-[11px] leading-relaxed text-dune-400 dark:text-dune-500">
-              {t("multiplicativeLossNote")}
-            </p>
+            </dl>
           </div>
 
           {/* Environmental */}
@@ -295,14 +311,11 @@ export function StepResults({
                 </div>
               ))}
             </dl>
-            <p className="mt-3 text-[11px] leading-relaxed text-dune-400 dark:text-dune-500">
-              {t("environmentalFootnote")}
-            </p>
           </div>
         </div>
       </Reveal>
 
-      {/* SDG + tariff note */}
+      {/* SDG + assumptions */}
       <Reveal delay={0.05} y={8}>
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="lg:col-span-2">
@@ -311,16 +324,11 @@ export function StepResults({
           <div className="card p-5">
             <h3 className="mb-2 text-sm font-bold text-dune-900 dark:text-dune-100">{t("assumptionsTitle")}</h3>
             <ul className="space-y-2 text-xs leading-relaxed text-dune-600 dark:text-dune-300">
-              <li>• GHI {gov.ghi} {isAr ? "ك.و.س/م²/يوم" : "kWh/m²/day"} · {getGovName(gov.key)} ({Math.min(...gov.monthlyTempsC)}–{Math.max(...gov.monthlyTempsC)}°C)</li>
+              <li>• GHI {gov.ghi} kWh/m²/day · {getGovName(gov.key)}</li>
               <li>• {getTariffLabel(e.inputs.tariffSchedule)}</li>
-              <li>• {t("usableRoofFactorLabel")} {fmtPct(e.inputs.usableAreaFactor * 100, 0)}</li>
-              <li>• {e.inputs.capacityDensityKwpM2.toFixed(2)} {isAr ? "ك.و.ب/م²" : "kWp/m²"}</li>
-              <li>• {fmtOmr(e.inputs.costPerKwpOmr, 0)}/{isAr ? "ك.و.ب" : "kWp"}</li>
-              <li>• {t("soilingLabel")}: {getSoilingLabel(e.inputs.soiling)} ({fmtPct((e.losses.soilingPct as number) * 100)})</li>
+              <li>• {t("soilingLabel")}: {e.inputs.soiling} dust level</li>
+              <li>• APSR tariff regulation effective 1 Jan 2025</li>
             </ul>
-            <p className="mt-3 text-[11px] leading-relaxed text-dune-400 dark:text-dune-500">
-              {t("disclaimerFootnote")}
-            </p>
           </div>
         </div>
       </Reveal>

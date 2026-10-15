@@ -253,6 +253,13 @@ export function Wizard() {
                 estimate={state.estimate}
                 onBack={() => dispatch({ type: "GO", step: 2 })}
                 onReset={() => dispatch({ type: "RESET" })}
+                onUpdateInputs={(patch) => {
+                  dispatch({ type: "PATCH_INPUTS", patch });
+                  // Recalculate immediately with updated inputs
+                  const updatedInputs = { ...state.inputs, ...patch };
+                  const newEstimate = estimateSolar(updatedInputs);
+                  dispatch({ type: "CALC_OK", estimate: newEstimate });
+                }}
               />
             </motion.div>
           )}

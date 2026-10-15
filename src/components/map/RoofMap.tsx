@@ -50,10 +50,10 @@ const QUICK_PLACES = [
 ];
 
 const SAMPLE_POLYGON: LngLat[] = [
-  [58.53781, 23.61759],
-  [58.53826, 23.61759],
-  [58.53826, 23.61768],
-  [58.53781, 23.61768],
+  [58.53786, 23.61752],
+  [58.53813, 23.61752],
+  [58.53813, 23.61768],
+  [58.53786, 23.61768],
 ];
 
 const OMAN_BOUNDS: [[number, number], [number, number]] = [
@@ -605,9 +605,9 @@ export function RoofMap({
         )}
       </div>
 
-      {/* Area readout */}
+      {/* Area readout (hidden on lg where the floating sidebar displays it) */}
       {(areaM2 > 0 || drawing || govKey) && (
-        <div className={`absolute bottom-3 z-10 rounded-xl bg-dune-950/85 px-4 py-2.5 shadow-soft backdrop-blur ${isAr ? "left-3 text-left lg:left-[20rem]" : "right-3 text-right lg:right-[20rem]"}`}>
+        <div className={`absolute bottom-3 z-10 rounded-xl bg-dune-950/85 px-4 py-2.5 shadow-soft backdrop-blur lg:hidden ${isAr ? "left-3 text-left" : "right-3 text-right"}`}>
           {drawing && areaM2 === 0 ? (
             <>
               <p className="text-[10px] font-semibold uppercase tracking-wide text-dune-400">{t("tracingInProgress")}</p>

@@ -220,10 +220,22 @@ export const O_M_RATE = 0.015; // 1.5% of capex per year (year-1 OPEX, doc 04)
 export const OPEX_INFLATION = 0.02; // Omani CPI, OPEX inflates 2%/yr (doc 04)
 export const DISCOUNT_RATE = 0.055; // 5.5% financial discount rate (doc 04)
 
-/** Monthly generation shape factors (clear-sky index, normalized to mean 1) */
+/** Monthly generation shape factors — Northern/Central Oman vs Dhofar Khareef monsoon (Jun–Sep dip) */
 export const MONTH_GENERATION_FACTORS: number[] = [
   0.86, 0.92, 1.0, 1.06, 1.09, 1.07, 1.03, 1.04, 1.05, 1.0, 0.9, 0.82,
 ];
+
+export const MONTH_GENERATION_FACTORS_DHOFAR: number[] = [
+  1.05, 1.10, 1.18, 1.22, 1.18, 0.88, 0.62, 0.65, 0.92, 1.12, 1.08, 1.00,
+];
+
+/** Standard commercial string inverter sizes (kW AC) for EPC sizing */
+export const STANDARD_INVERTER_KW = [3, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 60, 75, 100, 125, 150, 200, 250];
+
+/** Battery Energy Storage System (LFP) cost and round-trip efficiency */
+export const BATTERY_COST_PER_KWH_OMR = 115; // Turnkey LFP rack cost in Oman (OMR/kWh)
+export const BATTERY_RTE = 0.90; // 90% round-trip efficiency
+export const BATTERY_DOD = 0.90; // 90% depth of discharge
 
 /** Residential summer cooling demand shape (normalized to mean 1) */
 export const MONTH_DEMAND_FACTORS_RESIDENTIAL: number[] = [
@@ -241,9 +253,10 @@ export const DEFAULTS = {
   capacityDensityKwpM2: 0.21,
   /** Turnkey CAPEX baseline 300 OMR/kWp (KB range 250–350) */
   costPerKwpOmr: 300,
-  exportRateBaisa: 14, // net-metering credit for exported surplus (tier-1 rate)
+  exportRateBaisa: 14, // net-metering bulk credit for exported surplus
   monthlyConsumptionResidential: 3500,
   monthlyConsumptionCommercial: 8000,
+  batteryKwh: 0,
 };
 
 export function normalizeMean(arr: number[]): number[] {

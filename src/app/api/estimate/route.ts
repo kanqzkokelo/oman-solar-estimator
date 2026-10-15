@@ -33,6 +33,7 @@ function sanitizeInputs(body: unknown): SolarInputs {
     gridEmissionFactor: num(b.gridEmissionFactor, DEFAULT_INPUTS.gridEmissionFactor, 0, 1),
     tariffEscalation: num(b.tariffEscalation, DEFAULT_INPUTS.tariffEscalation, 0, 0.2),
     analysisYears: num(b.analysisYears, DEFAULT_INPUTS.analysisYears, 1, 40),
+    batteryKwh: num(b.batteryKwh, DEFAULT_INPUTS.batteryKwh ?? 0, 0, 1000),
   };
 }
 

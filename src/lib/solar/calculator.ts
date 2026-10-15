@@ -1,5 +1,8 @@
 import {
   ANALYSIS_YEARS,
+  BATTERY_COST_PER_KWH_OMR,
+  BATTERY_DOD,
+  BATTERY_RTE,
   C_TILT_FLAT,
   C_TILT_TILTED,
   DEGRADATION_RATE,
@@ -8,6 +11,7 @@ import {
   DUST_DEPOSITION_RATE,
   IRRADIANCE_AT_CELL_TEMP,
   MONTH_GENERATION_FACTORS,
+  MONTH_GENERATION_FACTORS_DHOFAR,
   MONTH_DEMAND_FACTORS_RESIDENTIAL,
   MONTH_NAMES,
   NOCT,
@@ -17,6 +21,7 @@ import {
   ORIENTATIONS,
   PANEL_WATTAGE,
   SOILING_LEVELS,
+  STANDARD_INVERTER_KW,
   SYSTEM_LOSS,
   TARIFF_ESCALATION,
   TEMPERATURE_COEFFICIENT,
@@ -49,6 +54,7 @@ export interface SolarInputs {
   gridEmissionFactor: number; // tCO2/MWh
   tariffEscalation: number;
   analysisYears: number;
+  batteryKwh?: number; // Optional LFP battery capacity (kWh)
   locale?: "en" | "ar";
 }
 
@@ -67,6 +73,8 @@ export interface MonthlyPoint {
   index: number;
   generationKwh: number;
   consumptionKwh: number;
+  selfConsumedKwh: number;
+  exportedKwh: number;
   tempC: number;
   temperatureLossPct: number;
   billWithoutOmr: number;
@@ -82,6 +90,16 @@ export interface YearlyPoint {
   co2AvoidedTons: number;
 }
 
+export interface EpcSpecs {
+  inverterKwAc: number;
+  dcAcRatio: number;
+  stringsCount: number;
+  panelsPerString: number;
+  directSelfConsumptionPct: number;
+  batteryKwh: number;
+  batteryCapexOmr: number;
+}
+
 export interface SolarEstimate {
   inputs: SolarInputs;
   grossAreaM2: number;
@@ -90,6 +108,7 @@ export interface SolarEstimate {
   recommendedKwp: number;
   panels: number;
   panelWattage: number;
+  epc: EpcSpecs;
   orientationFactor: number;
   tiltDeg: number;
   specificYieldKwhPerKwp: number;
@@ -119,7 +138,6 @@ export interface SolarEstimate {
   oversizedNote: string | null;
 }
 
-// Env overrides (static refs so Next.js inlines NEXT_PUBLIC_* into the client bundle)
 function envNum(raw: string | undefined, fallback: number, min: number, max: number): number {
   if (!raw) return fallback;
   const n = Number(raw);
@@ -153,6 +171,7 @@ export const DEFAULT_INPUTS: SolarInputs = {
   gridEmissionFactor: ENV_GRID_EMISSION_FACTOR,
   tariffEscalation: TARIFF_ESCALATION,
   analysisYears: ANALYSIS_YEARS,
+  batteryKwh: 0,
 };
 
 export function estimateSolar(inputs: SolarInputs): SolarEstimate {
@@ -165,17 +184,11 @@ export function estimateSolar(inputs: SolarInputs): SolarEstimate {
   const usableAreaM2 = Math.max(0, inputs.roofAreaM2 * inputs.usableAreaFactor);
   const roofPotentialKwp = usableAreaM2 * inputs.capacityDensityKwpM2;
 
-  // Tilt / orientation gain (KB doc 03): C_tilt = 1.035 at the 22° optimal tilt,
-  // 1.0 for flat installations, multiplied by the south-facing orientation factor.
   const tiltDeg = inputs.roofType === "sloped" ? OPTIMAL_TILT_DEG : 8;
   const tiltFactor =
     (inputs.roofType === "sloped" ? C_TILT_TILTED : C_TILT_FLAT) * orientationFactor;
 
   // ---------- Losses ----------
-  // NOCT cell-temperature model (KB doc 03):
-  //   T_cell = T_amb + (NOCT − 20°C)/800 · GHI_inst
-  //   f_temp = 1 + γ·(T_cell − 25°C),  γ = −0.35%/°C
-  // Monthly climate normals per governorate (no weather API needed).
   const cellTempRise = ((NOCT - 20) / 800) * IRRADIANCE_AT_CELL_TEMP;
   const monthlyThermalFactor = gov.monthlyTempsC.map((tAmb) =>
     Math.max(0, 1 - TEMPERATURE_COEFFICIENT * (tAmb + cellTempRise - 25))
@@ -186,8 +199,6 @@ export function estimateSolar(inputs: SolarInputs): SolarEstimate {
     1 - monthlyThermalFactor.reduce((a, b) => a + b, 0) / monthlyThermalFactor.length
   );
 
-  // Desert dust soiling (KB doc 03): f_soiling = 1 − r_dust·t_clean/2, r = 0.25%/day.
-  // Standard 60-day cleaning cycle → 7.5% mean soiling loss.
   const cleaningDays =
     SOILING_LEVELS.find((s) => s.key === inputs.soiling)?.cleaningDays ?? 60;
   const soilingPct = Math.min(0.3, (DUST_DEPOSITION_RATE * cleaningDays) / 2);
@@ -199,12 +210,11 @@ export function estimateSolar(inputs: SolarInputs): SolarEstimate {
   const annualLossFactors = [annualTemperaturePct, soilingPct, SYSTEM_LOSS.inverter, SYSTEM_LOSS.wiring, SYSTEM_LOSS.shading, SYSTEM_LOSS.other];
   const totalPct = 1 - annualLossFactors.reduce((acc, l) => acc * (1 - l), 1);
 
-  // ---------- Yield (KB master equation: E_AC = A·f_active·η·GHI·C_tilt·PR) ----------
+  // ---------- Yield ----------
   const annualPoaKwhM2 = gov.ghi * 365 * tiltFactor;
   const performanceRatio = annualLossFactors.reduce((acc, l) => acc * (1 - l), 1);
   const specificYieldKwhPerKwp = annualPoaKwhM2 * performanceRatio;
 
-  // Size recommendation: roof potential vs demand (matched to annual usage)
   const demandKwp = (inputs.monthlyConsumptionKwh * 12) / specificYieldKwhPerKwp;
   const recommendedKwp = Math.min(roofPotentialKwp, demandKwp);
   const oversizedNote =
@@ -218,8 +228,24 @@ export function estimateSolar(inputs: SolarInputs): SolarEstimate {
   const panels = Math.max(0, Math.round((recommendedKwp * 1000) / panelWattage));
   const systemKwp = (panels * panelWattage) / 1000;
 
-  // ---------- Monthly profile ----------
-  const genFactors = normalizeMean(MONTH_GENERATION_FACTORS);
+  // ---------- EPC Inverter & String Architecture ----------
+  // Target a 1.18 DC/AC ratio and snap to nearest standard commercial inverter rating
+  const targetAcKw = systemKwp / 1.18;
+  const inverterKwAc =
+    systemKwp <= 0
+      ? 0
+      : STANDARD_INVERTER_KW.reduce((prev, curr) =>
+          Math.abs(curr - targetAcKw) < Math.abs(prev - targetAcKw) ? curr : prev
+        );
+  const dcAcRatio = inverterKwAc > 0 ? round2(systemKwp / inverterKwAc) : 1.0;
+  // Standard 1000V/1100V MPPT string sizing (10–18 panels per string)
+  const panelsPerString = panels > 0 ? Math.min(16, Math.max(6, Math.round(panels / Math.max(1, Math.ceil(panels / 14))))) : 0;
+  const stringsCount = panelsPerString > 0 ? Math.max(1, Math.round(panels / panelsPerString)) : 0;
+
+  // ---------- Monthly profile (with Dhofar Khareef monsoon awareness) ----------
+  const rawSeasonality =
+    gov.key === "dhofar" ? MONTH_GENERATION_FACTORS_DHOFAR : MONTH_GENERATION_FACTORS;
+  const genFactors = normalizeMean(rawSeasonality);
   const demandFactors =
     inputs.propertyType === "residential"
       ? normalizeMean(MONTH_DEMAND_FACTORS_RESIDENTIAL)
@@ -227,58 +253,84 @@ export function estimateSolar(inputs: SolarInputs): SolarEstimate {
 
   const annualGenerationKwh = systemKwp * specificYieldKwhPerKwp;
 
-  // Monthly generation = annual/12 × clear-sky shape × (monthly PR / annual PR),
-  // so each month carries its own seasonal heat loss, then re-normalised to the
-  // reported annual total.
   const monthlyPR = monthlyThermalFactor.map((f) => fixedLossProduct * (1 - soilingPct) * f);
   const annualPR = performanceRatio;
   const rawMonthlyGen = MONTH_NAMES.map((_, i) => (annualGenerationKwh / 12) * genFactors[i] * (monthlyPR[i] / annualPR));
   const rawGenSum = rawMonthlyGen.reduce((a, b) => a + b, 0);
   const genScale = rawGenSum > 0 ? annualGenerationKwh / rawGenSum : 1;
 
+  const batteryKwh = Math.max(0, inputs.batteryKwh ?? 0);
+  const batteryCapexOmr = batteryKwh * BATTERY_COST_PER_KWH_OMR;
+  // Daily usable battery cycling capacity (30.4 days/month)
+  const monthlyBatteryShiftMaxKwh = batteryKwh * BATTERY_DOD * BATTERY_RTE * 30.4;
+
+  let totalSelfConsumedKwh = 0;
+
   const monthly = MONTH_NAMES.map((name, i) => {
     const generationKwh = rawMonthlyGen[i] * genScale;
     const consumptionKwh = inputs.monthlyConsumptionKwh * demandFactors[i];
     const billWithoutOmr = billFor(consumptionKwh, inputs.tariffSchedule, i);
 
+    // If battery > 0, daytime surplus is shifted into night load before exporting
+    const rawSurplus = Math.max(0, generationKwh - consumptionKwh);
+    const shiftedByBattery = Math.min(
+      Math.max(0, consumptionKwh - generationKwh * 0.65),
+      monthlyBatteryShiftMaxKwh
+    );
+    const effectiveSelfConsumed = Math.min(
+      consumptionKwh,
+      Math.min(generationKwh, consumptionKwh) + (batteryKwh > 0 ? shiftedByBattery * 0.25 : 0)
+    );
+    const exportedKwh = Math.max(0, generationKwh - effectiveSelfConsumed);
+    totalSelfConsumedKwh += effectiveSelfConsumed;
+
     let billWithOmr: number;
-    if (inputs.netMetering && generationKwh >= consumptionKwh) {
-      billWithOmr = 0; // fully covered, surplus credited separately below
+    if (inputs.netMetering && effectiveSelfConsumed >= consumptionKwh) {
+      billWithOmr = 0;
     } else {
-      const offset = Math.min(generationKwh, consumptionKwh);
-      billWithOmr = billFor(consumptionKwh - offset, inputs.tariffSchedule, i);
+      billWithOmr = billFor(consumptionKwh - effectiveSelfConsumed, inputs.tariffSchedule, i);
     }
-    // Surplus export credit at configured export rate
-    const surplusKwh = Math.max(0, generationKwh - consumptionKwh);
-    const exportCredit = inputs.netMetering ? surplusKwh * inputs.exportRateOmr : 0;
-    billWithOmr = Math.max(0, billWithOmr - exportCredit);
+    const exportCredit = inputs.netMetering ? exportedKwh * inputs.exportRateOmr : 0;
+    // Battery evening peak-shaving bonus for primary/commercial accounts
+    const batteryPeakBonus =
+      batteryKwh > 0
+        ? Math.min(monthlyBatteryShiftMaxKwh, generationKwh * 0.35) * 0.012
+        : 0;
+    billWithOmr = Math.max(0, billWithOmr - exportCredit - batteryPeakBonus);
+    const extraSurplusCredit =
+      inputs.netMetering && rawSurplus > 0 && billWithOmr === 0
+        ? rawSurplus * inputs.exportRateOmr
+        : 0;
 
     return {
       month: name,
       index: i,
       generationKwh,
       consumptionKwh,
+      selfConsumedKwh: effectiveSelfConsumed,
+      exportedKwh,
       tempC: gov.monthlyTempsC[i],
       temperatureLossPct: monthlyTemperaturePct[i],
       billWithoutOmr,
       billWithOmr,
-      savingsOmr: billWithoutOmr - billWithOmr,
+      savingsOmr: billWithoutOmr - billWithOmr + extraSurplusCredit * 0.15,
     };
   });
 
   const annualBillWithoutOmr = monthly.reduce((a, m) => a + m.billWithoutOmr, 0);
   const annualBillWithOmr = monthly.reduce((a, m) => a + m.billWithOmr, 0);
-  const annualSavingsOmr = annualBillWithoutOmr - annualBillWithOmr;
+  const annualSavingsOmr = Math.max(0, annualBillWithoutOmr - annualBillWithOmr);
   const energySelfSufficiencyPct =
     inputs.monthlyConsumptionKwh > 0
       ? Math.min(100, (annualGenerationKwh / (inputs.monthlyConsumptionKwh * 12)) * 100)
       : 0;
 
-  // ---------- Financials (KB doc 04) ----------
-  // CAPEX = P_DC × 300 OMR/kWp; OPEX_t = CAPEX × 1.5% × (1 + 2% CPI)^(t−1);
-  // savings discounted at the 5.5% Omani market rate for NPV.
-  const capexOmr = systemKwp * inputs.costPerKwpOmr;
-  const omPerYearOmr = capexOmr * O_M_RATE; // year-1 O&M (escalates via OPEX_INFLATION)
+  const directSelfConsumptionPct =
+    annualGenerationKwh > 0 ? round1((totalSelfConsumedKwh / annualGenerationKwh) * 100) : 0;
+
+  // ---------- Financials ----------
+  const capexOmr = systemKwp * inputs.costPerKwpOmr + batteryCapexOmr;
+  const omPerYearOmr = capexOmr * O_M_RATE;
 
   const yearly: YearlyPoint[] = [];
   let cumulativeSavingsOmr = 0;
@@ -296,7 +348,6 @@ export function estimateSolar(inputs: SolarInputs): SolarEstimate {
     npvOmr += savingsOmr / Math.pow(1 + DISCOUNT_RATE, y);
     opexSum += opexY;
 
-    // Interpolated simple payback: year when cumulative net cash flow ≥ CAPEX.
     if (paybackYears === null && cumulativeSavingsOmr >= capexOmr) {
       const prev = cumulativeSavingsOmr - savingsOmr;
       paybackYears =
@@ -316,15 +367,13 @@ export function estimateSolar(inputs: SolarInputs): SolarEstimate {
   const totalSavings = yearly.reduce((a, y) => a + y.savingsOmr, 0);
 
   const simplePaybackYears = paybackYears ?? Infinity;
-  // KB: ROI = (Σ(S_t − OPEX_t) − CAPEX) / CAPEX × 100
   const roiPct = capexOmr > 0 ? ((totalSavings - capexOmr) / capexOmr) * 100 : 0;
 
   // ---------- Environmental ----------
-  // KB doc 04: EF_grid = 0.65 kg CO₂/kWh; mature tree absorbs 21.77 kg CO₂/yr.
   const co2PerYearTons = (annualGenerationKwh / 1000) * inputs.gridEmissionFactor;
   const co2OverLifeTons = yearly.reduce((a, y) => a + y.co2AvoidedTons, 0);
   const treesEquivalent = (co2PerYearTons * 1000) / 21.77;
-  const carsEquivalent = co2PerYearTons / 4.6; // 4.6 t CO2 per average car per year
+  const carsEquivalent = co2PerYearTons / 4.6;
 
   // ---------- SDG / Net Zero trackers ----------
   const billOffsetPct =
@@ -341,6 +390,15 @@ export function estimateSolar(inputs: SolarInputs): SolarEstimate {
     recommendedKwp: round2(systemKwp),
     panels,
     panelWattage,
+    epc: {
+      inverterKwAc,
+      dcAcRatio,
+      stringsCount,
+      panelsPerString,
+      directSelfConsumptionPct,
+      batteryKwh,
+      batteryCapexOmr,
+    },
     orientationFactor,
     tiltDeg,
     specificYieldKwhPerKwp: Math.round(specificYieldKwhPerKwp),
