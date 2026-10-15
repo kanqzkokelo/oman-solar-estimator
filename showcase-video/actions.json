@@ -1,0 +1,98 @@
+{
+  "browser": "firefox-headless-webgl",
+  "viewport": [
+    1920,
+    1080
+  ],
+  "actions": [
+    {
+      "from": "01-hero",
+      "click": {
+        "x": 508,
+        "y": 748
+      },
+      "label": "Start estimating\n\u2192"
+    },
+    {
+      "from": "02-wizard",
+      "click": {
+        "x": 583,
+        "y": 743
+      },
+      "label": "Demo roof"
+    },
+    {
+      "from": "03-campus",
+      "click": {
+        "x": 469,
+        "y": 672
+      },
+      "label": "\u2726 Trace my roof"
+    },
+    {
+      "from": "03-campus",
+      "click": {
+        "x": 922,
+        "y": 429
+      },
+      "label": "Corner 1"
+    },
+    {
+      "from": "03-campus",
+      "click": {
+        "x": 988,
+        "y": 426
+      },
+      "label": "Corner 2"
+    },
+    {
+      "from": "03-campus",
+      "click": {
+        "x": 991,
+        "y": 474
+      },
+      "label": "Corner 3"
+    },
+    {
+      "from": "03-campus",
+      "click": {
+        "x": 925,
+        "y": 477
+      },
+      "label": "Corner 4"
+    },
+    {
+      "from": "04-corners",
+      "click": {
+        "x": 700,
+        "y": 672
+      },
+      "label": "Finish polygon"
+    },
+    {
+      "from": "05-traced",
+      "click": {
+        "x": 1384,
+        "y": 773
+      },
+      "label": "Continue to property details \u2192"
+    },
+    {
+      "from": "06-details",
+      "click": {
+        "x": 590,
+        "y": 491
+      },
+      "label": "Bill input",
+      "type": "150"
+    },
+    {
+      "from": "07-bill",
+      "click": {
+        "x": 1395,
+        "y": 824
+      },
+      "label": "Calculate my estimate \u2192"
+    }
+  ]
+}

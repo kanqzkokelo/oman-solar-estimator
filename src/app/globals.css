@@ -1,0 +1,193 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-dune-50 text-dune-900 antialiased dark:bg-dune-950 dark:text-dune-100;
+  /* Tabular figures everywhere: animated/measured numbers never jitter. */
+  font-variant-numeric: tabular-nums;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-dune-300 dark:bg-dune-700;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-dune-400 dark:bg-dune-600;
+}
+
+@layer components {
+  .card {
+    @apply rounded-3xl border border-transparent bg-dune-100 dark:border-transparent dark:bg-dune-900;
+  }
+  .input-base {
+    @apply w-full rounded-2xl border border-dune-200 bg-white px-4 py-3 text-[15px] text-dune-900 outline-none transition focus:border-dune-900 focus:ring-2 focus:ring-dune-900/10 dark:border-white/10 dark:bg-white/5 dark:text-dune-100 dark:focus:border-dune-100 dark:focus:ring-dune-100/10;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold tracking-[-0.01em] transition disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-dune-900 text-white hover:bg-dune-800 dark:bg-white dark:text-dune-900 dark:hover:bg-dune-200;
+  }
+  .btn-secondary {
+    @apply btn border border-dune-300 bg-white/70 text-dune-900 backdrop-blur hover:bg-white dark:border-white/15 dark:bg-white/5 dark:text-dune-100 dark:hover:bg-white/10;
+  }
+  .btn-accent {
+    @apply btn bg-solar-400 text-dune-950 hover:bg-solar-300;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-transparent bg-white px-3 py-1 text-xs font-medium text-dune-600 dark:bg-white/10 dark:text-dune-300;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-dune-500 dark:text-dune-400;
+  }
+}
+
+/* ---------- Premium effects ---------- */
+.bg-aurora {
+  background:
+    radial-gradient(55% 55% at 18% 12%, rgba(252, 211, 77, 0.18), transparent 60%),
+    radial-gradient(45% 45% at 82% 22%, rgba(60, 156, 75, 0.16), transparent 55%),
+    radial-gradient(60% 60% at 55% 95%, rgba(96, 165, 250, 0.1), transparent 60%);
+}
+
+.aurora-slow {
+  background:
+    radial-gradient(42% 55% at 18% 20%, rgba(252, 211, 77, 0.22), transparent 60%),
+    radial-gradient(38% 50% at 78% 25%, rgba(60, 156, 75, 0.18), transparent 60%),
+    radial-gradient(50% 55% at 50% 100%, rgba(96, 165, 250, 0.1), transparent 62%);
+  background-size: 160% 160%;
+  animation: aurora-drift 16s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-drift {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 100% 30%;
+  }
+}
+
+.gradient-text-sun {
+  background: linear-gradient(120deg, #f59e0b, #fbbf24 40%, #fcd34d);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.shine-hover {
+  position: relative;
+  overflow: hidden;
+}
+.shine-hover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.35) 50%, transparent 60%);
+  transform: translateX(-120%);
+  transition: transform 0.8s ease;
+  pointer-events: none;
+}
+.shine-hover:hover::after {
+  transform: translateX(120%);
+}
+
+/* ---------- Apple-style interaction feedback (design pass) ---------- */
+
+/* Release side of the press: buttons ease transform/filter like their other
+   transitions. Utilities layer still wins where a `transition*` class exists. */
+@layer base {
+  button {
+    transition-property: color, background-color, border-color, text-decoration-color, fill,
+      stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Press feedback starts on pointer-down — not on release: instant highlight,
+   3% scale, 100ms ease-out. transform/filter only (compositor-safe). */
+.btn-primary:active:not(:disabled),
+.btn-secondary:active:not(:disabled),
+.btn-accent:active:not(:disabled),
+button:active:not(:disabled) {
+  transform: scale(0.97);
+  filter: brightness(0.95);
+  transition: transform 100ms ease-out, filter 100ms ease-out;
+}
+
+/* Keyboard focus: one ring language for every control, light + dark. */
+:where(button, a, summary, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid #1d1d1f; /* dune-900 */
+  outline-offset: 2px;
+}
+.dark :where(button, a, summary, [role="button"], [tabindex]):focus-visible {
+  outline-color: #f5f5f7; /* dune-100 */
+}
+
+/* Reduced motion: travel becomes instant state — feedback stays visible. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* MapLibre container (satellite imagery) */
+.maplibregl-map {
+  @apply rounded-3xl;
+}
+.maplibregl-ctrl-group {
+  @apply rounded-xl !border !border-dune-200 shadow-soft dark:!bg-dune-800;
+}
+
+/* Print: only the report area is visible */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #print-report,
+  #print-report * {
+    visibility: visible;
+  }
+  #print-report {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-break {
+    break-inside: avoid;
+  }
+}

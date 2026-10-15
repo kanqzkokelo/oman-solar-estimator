@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1920, height=1080" />
+<title>Oman Rooftop Solar Estimator — Live Showcase</title>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+  body { margin: 0; background: #0b0b0d; font-family: Inter, system-ui, sans-serif; }
+  #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #0b0b0d; }
+  .clip { position: absolute; inset: 0; overflow: hidden; }
+  .fade { position: absolute; inset: 0; }
+  .plate { position: absolute; inset: 0; }
+  .plate img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .vignette { position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 130% 105% at 50% 45%, transparent 62%, rgba(0,0,0,0.38) 100%); }
+
+  .cap { position: absolute; left: 64px; bottom: 44px; max-width: 980px;
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(10,10,13,0.66); backdrop-filter: blur(7px);
+    padding: 16px 24px; border-radius: 16px;
+    box-shadow: 0 10px 34px rgba(0,0,0,.45), inset 0 0 0 1px rgba(245,166,35,.16); }
+  .cap .tick { width: 10px; height: 34px; border-radius: 3px; background: #f5a623; box-shadow: 0 0 18px rgba(245,166,35,.55); }
+  .cap .txt { font-size: 30px; font-weight: 650; letter-spacing: -0.01em; color: #f4f1ea;
+    text-shadow: 0 2px 14px rgba(0,0,0,.85), 0 0 2px rgba(0,0,0,.9); line-height: 1.25; }
+  .cap .txt b { color: #f5a623; font-weight: 750; }
+
+  /* cursor: x/y is the pointer hotspot (arrow tip) */
+  #cursor { position: absolute; left: 0; top: 0; width: 34px; height: 44px; z-index: 60;
+    filter: drop-shadow(0 3px 8px rgba(0,0,0,.55)); will-change: transform; }
+  #cursor svg { margin-left: -5px; margin-top: -3px; }
+  #ring { position: absolute; left: 0; top: 0; width: 28px; height: 28px; margin: -14px 0 0 -14px;
+    border: 3px solid rgba(245,166,35,.95); border-radius: 50%; opacity: 0; z-index: 59;
+    box-shadow: 0 0 16px rgba(245,166,35,.5); will-change: transform, opacity; }
+
+  .endcard { position: absolute; inset: 0; display: grid; place-items: center;
+    background: linear-gradient(180deg, rgba(8,8,10,.25) 0%, rgba(8,8,10,.78) 68%, rgba(8,8,10,.92) 100%); }
+  .endcard .inner { text-align: center; }
+  .endcard .brand { font-size: 84px; font-weight: 800; letter-spacing: -0.02em; color: #f4f1ea; line-height: 1.02;
+    text-shadow: 0 4px 30px rgba(0,0,0,.8); }
+  .endcard .brand span { color: #f5a623; }
+  .endcard .sub { margin-top: 22px; font-size: 30px; font-weight: 550; color: #d9d4c8; }
+  .endcard .meta { margin-top: 16px; font-size: 20px; font-weight: 500; color: #d0cdc9; letter-spacing: .02em; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="48">
+
+  <!-- S1 · hook -->
+  <section class="clip" id="s1" data-start="0" data-duration="5.5" data-track-index="0">
+    <div class="fade"><div class="plate" id="p1" style="transform-origin: 30% 42%;"><img src="assets/01-hero.png" alt=""></div></div>
+    <div class="vignette"></div>
+    <div class="cap" id="cap1"><div class="tick"></div><div class="txt">Oman gets <b>5.5–6.5 kWh/m²/day</b> of sun — but what would solar do for <b>your roof</b>?</div></div>
+  </section>
+
+  <!-- S2 · wizard -->
+  <section class="clip" id="s2" data-start="5.5" data-duration="4.5" data-track-index="0">
+    <div class="fade"><div class="plate" id="p2" style="transform-origin: 50% 55%;"><img src="assets/02-wizard.png" alt=""></div></div>
+    <div class="vignette"></div>
+    <div class="cap" id="cap2"><div class="tick"></div><div class="txt">Satellite map, cached for <b>Muscat</b> — the estimator is live</div></div>
+  </section>
+
+  <!-- S3 · fly-in -->
+  <section class="clip" id="s3" data-start="10" data-duration="5.5" data-track-index="0">
+    <div class="fade"><div class="plate" id="p3" style="transform-origin: 50% 42%;"><img src="assets/03-campus.png" alt=""></div></div>
+    <div class="vignette"></div>
+    <div class="cap" id="cap3"><div class="tick"></div><div class="txt"><b>Demo roof</b> — the camera flies to the Indian School Muscat campus</div></div>
+  </section>
+
+  <!-- S4 · trace A (corners 1–2) -->
+  <section class="clip" id="s4" data-start="15.5" data-duration="4.7" data-track-index="0">
+    <div class="fade"><div class="plate" id="p4" style="transform-origin: 50% 42%;"><img src="assets/03-campus.png" alt=""></div></div>
+    <div class="vignette"></div>
+    <div class="cap" id="cap4"><div class="tick"></div><div class="txt">Tracing the roof — <b>corner by corner</b></div></div>
+  </section>
+
+  <!-- S5 · trace B (corners 3–4 + finish) -->
+  <section class="clip" id="s5" data-start="20.2" data-duration="3.8" data-track-index="1">
+    <div class="fade"><div class="plate" id="p5" style="transform-origin: 50% 42%;"><img src="assets/04-corners.png" alt=""></div></div>
+    <div class="vignette"></div>
+    <div class="cap" id="cap5"><div class="tick"></div><div class="txt">Polygon closes → <b>finish</b></div></div>
+  </section>
+
+  <!-- S6 · traced readout -->
+  <section class="clip" id="s6" data-start="24" data-duration="5" data-track-index="1">
+    <div class="fade"><div class="plate" id="p6" style="transform-origin: 74% 42%;"><img src="assets/05-traced.png" alt=""></div></div>
+    <div class="vignette"></div>
+    <div class="cap" id="cap6"><div class="tick"></div><div class="txt"><b>467.5 m²</b> traced · ≈ <b>133 panels</b> · governorate auto-detected</div></div>
+  </section>
+
+  <!-- S7 · details -->
+  <section class="clip" id="s7" data-start="29" data-duration="2.4" data-track-index="2">
+    <div class="fade"><div class="plate" id="p7" style="transform-origin: 32% 45%;"><img src="assets/06-details.png" alt=""></div></div>
+    <div class="vignette"></div>
+    <div class="cap" id="cap7"><div class="tick"></div><div class="txt">Bill in <b>OMR</b> — auto-converts to kWh</div></div>
+  </section>
+  <section class="clip" id="s7b" data-start="31.4" data-duration="3" data-track-index="2">
+    <div class="fade"><div class="plate" id="p7b" style="transform-origin: 32% 45%;"><img src="assets/07-bill.png" alt=""></div></div>
+    <div class="vignette"></div>
+    <div class="cap" id="cap7b"><div class="tick"></div><div class="txt">150 OMR → <b>kWh</b> — live conversion</div></div>
+  </section>
+
+  <!-- S8 · results reveal -->
+  <section class="clip" id="s8" data-start="34.4" data-duration="3.6" data-track-index="3">
+    <div class="fade"><div class="plate" id="p8" style="transform-origin: 50% 40%;"><img src="assets/08-results.png" alt=""></div></div>
+    <div class="vignette"></div>
+    <div class="cap" id="cap8"><div class="tick"></div><div class="txt">The full business case — <b>in seconds</b></div></div>
+  </section>
+
+  <!-- S9 · results pan -->
+  <section class="clip" id="s9" data-start="38" data-duration="2.2" data-track-index="4">
+    <div class="fade" id="f9"><div class="plate" id="p9" style="transform-origin: 50% 50%;"><img src="assets/09-results-mid.png" alt=""></div></div>
+    <div class="vignette"></div>
+  </section>
+  <section class="clip" id="s10" data-start="40.2" data-duration="2.2" data-track-index="4">
+    <div class="fade" id="f10"><div class="plate" id="p10" style="transform-origin: 50% 50%;"><img src="assets/10-results-chart.png" alt=""></div></div>
+    <div class="vignette"></div>
+    <div class="cap" id="cap10"><div class="tick"></div><div class="txt">Generation <b>vs</b> consumption — every month of the year</div></div>
+  </section>
+  <section class="clip" id="s11" data-start="42.4" data-duration="5.6" data-track-index="5">
+    <div class="fade" id="f11"><div class="plate" id="p11" style="transform-origin: 50% 50%;"><img src="assets/11-results-impact.png" alt=""></div></div>
+    <div class="vignette"></div>
+    <div class="cap" id="cap11"><div class="tick"></div><div class="txt"><b>CO₂ avoided</b> · SDG 7 · SDG 11 · Net Zero 2050</div></div>
+    <div class="endcard" id="endcard">
+      <div class="inner">
+        <div class="brand">Oman Rooftop <span>Solar</span> Estimator</div>
+        <div class="sub">Trace your roof · Know your solar future</div>
+        <div class="meta">Real Oman data — governorate irradiance · Nama 2025 tariffs · desert dust · Gulf heat</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- cursor -->
+  <section class="clip" id="cursor-scene" data-start="5.5" data-duration="33.6" data-track-index="9">
+    <div class="fade" id="cursor-fade">
+      <div id="ring"></div>
+      <div id="cursor">
+        <svg width="34" height="44" viewBox="0 0 34 44">
+          <path d="M4 2 L4 36 L12.5 28.5 L18 41 L24.5 38 L19 26 L30 25 Z"
+                fill="#ffffff" stroke="#101014" stroke-width="2.4" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- audio -->
+  <audio id="bed"        src="audio/bed.wav"          data-start="0"    data-duration="48"></audio>
+  <audio id="wh-open"    src="audio/whoosh.wav"       data-start="0.3"  data-duration="0.7"></audio>
+  <audio id="sw-s2"      src="audio/swoosh-short.wav" data-start="5.5"  data-duration="0.25"></audio>
+  <audio id="ck-demo"    src="audio/click.wav"        data-start="9.9"  data-duration="0.06"></audio>
+  <audio id="wh-fly"     src="audio/whoosh.wav"       data-start="10.05" data-duration="0.7"></audio>
+  <audio id="cs-c1"      src="audio/click-soft.wav"   data-start="16.2" data-duration="0.05"></audio>
+  <audio id="cs-c2"      src="audio/click-soft.wav"   data-start="18.4" data-duration="0.05"></audio>
+  <audio id="sw-s5"      src="audio/swoosh-short.wav" data-start="20.2" data-duration="0.25"></audio>
+  <audio id="cs-c3"      src="audio/click-soft.wav"   data-start="21"   data-duration="0.05"></audio>
+  <audio id="cs-c4"      src="audio/click-soft.wav"   data-start="22.4" data-duration="0.05"></audio>
+  <audio id="ck-fin"     src="audio/click.wav"        data-start="23.6" data-duration="0.06"></audio>
+  <audio id="ok-area"    src="audio/success.wav"      data-start="24.3" data-duration="0.6"></audio>
+  <audio id="ck-cont"    src="audio/click.wav"        data-start="28.2" data-duration="0.06"></audio>
+  <audio id="sw-s7"      src="audio/swoosh-short.wav" data-start="29"   data-duration="0.25"></audio>
+  <audio id="pp-focus"   src="audio/pop.wav"          data-start="30"   data-duration="0.07"></audio>
+  <audio id="pp-1"       src="audio/pop.wav"          data-start="30.35" data-duration="0.07"></audio>
+  <audio id="pp-5"       src="audio/pop.wav"          data-start="30.65" data-duration="0.07"></audio>
+  <audio id="pp-0"       src="audio/pop.wav"          data-start="30.95" data-duration="0.07"></audio>
+  <audio id="sw-s7b"     src="audio/swoosh-short.wav" data-start="31.4" data-duration="0.25"></audio>
+  <audio id="ck-calc"    src="audio/click.wav"        data-start="34"   data-duration="0.06"></audio>
+  <audio id="ok-res"     src="audio/success.wav"      data-start="34.7" data-duration="0.6"></audio>
+  <audio id="sw-s9"      src="audio/swoosh-short.wav" data-start="38"   data-duration="0.25"></audio>
+  <audio id="sw-s10"     src="audio/swoosh-short.wav" data-start="40.2" data-duration="0.25"></audio>
+  <audio id="sw-s11"     src="audio/swoosh-short.wav" data-start="42.4" data-duration="0.25"></audio>
+</div>
+
+<script>
+const tl = gsap.timeline({ paused: true });
+const E = "power2.inOut", EO = "power2.out";
+
+/* ---------- plates: Ken Burns + punch-ins ---------- */
+tl.fromTo("#p1", { scale: 1.0 },  { scale: 1.07, duration: 5.5, ease: "none" }, 0);
+tl.fromTo("#p2", { scale: 1.045 },{ scale: 1.0,  duration: 4.5, ease: E }, 5.5);
+/* fly-in: campus plate arrives from "wide" */
+tl.fromTo("#p3", { scale: 0.86 }, { scale: 1.02, duration: 1.9, ease: EO }, 10);
+tl.to("#p3",    { scale: 1.06,    duration: 3.5, ease: "none" }, 12);
+tl.fromTo("#p4", { scale: 1.02 }, { scale: 1.09, duration: 4.7, ease: "none" }, 15.5);
+tl.fromTo("#p5", { scale: 1.03 }, { scale: 1.1,  duration: 3.8, ease: "none" }, 20.2);
+/* punch into the readout panel, then relax */
+tl.fromTo("#p6", { scale: 1.0 },  { scale: 1.22, duration: 1.4, ease: EO }, 24);
+tl.to("#p6",    { scale: 1.12,    duration: 3.4, ease: "none" }, 25.4);
+tl.fromTo("#p7", { scale: 1.0 },  { scale: 1.08, duration: 3.1, ease: "none" }, 29);
+tl.fromTo("#p7b",{ scale: 1.02 }, { scale: 1.1,  duration: 3,   ease: "none" }, 31.4);
+tl.fromTo("#p8", { scale: 1.14 }, { scale: 1.0,  duration: 2.2, ease: EO }, 34.4);
+tl.to("#p8",    { scale: 1.03,    duration: 3.8, ease: "none" }, 36.6);
+tl.fromTo("#p9", { scale: 1.0 },  { scale: 1.08, duration: 4.6, ease: "none" }, 38);
+tl.fromTo("#p10",{ scale: 1.0 },  { scale: 1.1,  duration: 7.8, ease: "none" }, 40.2);
+tl.fromTo("#p11",{ scale: 1.0 },  { scale: 1.05, duration: 5.6, ease: "none" }, 42.4);
+
+/* ---------- overlapping fades for the results series ---------- */
+tl.fromTo("#f9",  { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "none", immediateRender: false }, 38);
+tl.fromTo("#f10", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "none", immediateRender: false }, 40.2);
+tl.fromTo("#f11", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "none", immediateRender: false }, 42.4);
+
+/* ---------- captions ---------- */
+[
+  ["#cap1", 0.35], ["#cap2", 5.85], ["#cap3", 10.4], ["#cap4", 15.9], ["#cap5", 20.55],
+  ["#cap6", 24.35], ["#cap7", 29.35], ["#cap7b", 31.75], ["#cap8", 34.75], ["#cap10", 40.55], ["#cap11", 42.75],
+].forEach(([sel, at]) => {
+  tl.fromTo(sel, { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: EO, immediateRender: false }, at);
+});
+
+/* ---------- caption handoffs: retire the outgoing pill before the new one lands ---------- */
+tl.to("#cap7",  { opacity: 0, duration: 0.15, ease: "none" }, 31.4);
+tl.to("#cap8",  { opacity: 0, duration: 0.15, ease: "none" }, 40.2);
+tl.to("#cap10", { opacity: 0, duration: 0.15, ease: "none" }, 42.4);
+tl.to("#cap11", { opacity: 0, duration: 0.4,  ease: "none" }, 43.1);
+
+/* ---------- cursor ---------- */
+tl.fromTo("#cursor-fade", { opacity: 0 }, { opacity: 1, duration: 0.4, immediateRender: false }, 5.6);
+tl.fromTo("#cursor", { x: 700, y: 1150 }, { x: 583, y: 743, duration: 3.9, ease: E, immediateRender: false }, 5.9);
+
+function glide(x, y, at, dur, ease) {
+  tl.to("#cursor", { x, y, duration: dur, ease: ease || E }, at);
+}
+function clickFx(x, y, at, soft) {
+  /* amber ripple exactly at the click hotspot + cursor press pulse */
+  tl.fromTo("#ring", { x: x, y: y, scale: 0.35, opacity: 0.95 },
+    { scale: 1.9, opacity: 0, duration: 0.5, ease: EO, immediateRender: false }, at);
+  tl.fromTo("#cursor svg", { scale: soft ? 0.9 : 0.82, transformOrigin: "18% 12%" },
+    { scale: 1, duration: 0.22, ease: EO, immediateRender: false }, at);
+}
+
+glide(900, 470, 10.3, 4.4, "power1.inOut");                 /* hover drift over the map */
+clickFx(583, 743, 9.9, false);                              /* Demo roof */
+glide(922, 429, 15.6, 0.6);  clickFx(922, 429, 16.2, true); /* corner 1 */
+glide(988, 426, 16.9, 1.3);  clickFx(988, 426, 18.4, true); /* corner 2 */
+glide(991, 474, 20.3, 0.6);  clickFx(991, 474, 21.0, true); /* corner 3 */
+glide(925, 477, 21.5, 0.7);  clickFx(925, 477, 22.4, true); /* corner 4 */
+glide(700, 672, 22.9, 0.6);  clickFx(700, 672, 23.6, false);/* finish polygon */
+glide(1384, 773, 27.0, 1.1); clickFx(1384, 773, 28.2, false);/* continue */
+glide(590, 491, 29.3, 0.6);  clickFx(590, 491, 30.0, false); /* bill input */
+glide(1395, 824, 32.6, 1.2, "power1.inOut"); clickFx(1395, 824, 34.0, false); /* calculate */
+glide(1100, 700, 34.6, 1.0, "power1.inOut");                /* rest on results */
+tl.to("#cursor-fade", { opacity: 0, duration: 0.6, ease: "none" }, 38.3);
+
+/* ---------- end card ---------- */
+tl.fromTo("#endcard", { opacity: 0 }, { opacity: 1, duration: 1.1, ease: EO, immediateRender: false }, 43.4);
+tl.fromTo("#endcard .brand", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: EO, immediateRender: false }, 43.7);
+tl.fromTo("#endcard .sub",   { y: 22, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: EO, immediateRender: false }, 44.1);
+tl.fromTo("#endcard .meta",  { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: EO, immediateRender: false }, 44.5);
+
+window.__timelines["main"] = tl;
+</script>
+</body>
+</html>
