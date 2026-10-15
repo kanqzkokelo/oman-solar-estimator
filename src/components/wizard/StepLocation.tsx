@@ -12,7 +12,7 @@ export function StepLocation({
   onAreaChange: (m2: number) => void;
   children: ReactNode;
 }) {
-  const { t, fmtInt, fmtM2 } = useLanguage();
+  const { t, isAr, fmtInt, fmtM2 } = useLanguage();
   const usable = area * DEFAULTS.usableAreaFactor;
   const panels = Math.floor((usable * DEFAULTS.capacityDensityKwpM2 * 1000) / 550);
 
@@ -58,7 +58,7 @@ export function StepLocation({
             </div>
             <div className="flex justify-between">
               <dt>{t("capacityDensity")}</dt>
-              <dd className="font-semibold">170 W/m²</dd>
+              <dd className="font-semibold">{Math.round(DEFAULTS.capacityDensityKwpM2 * 1000)} {isAr ? "واط/م²" : "W/m²"}</dd>
             </div>
           </dl>
         </div>

@@ -237,6 +237,8 @@ export const DICT = {
       "SDG 7 score reflects the share of household/business demand met by clean rooftop power; SDG 11 blends bill relief with urban clean-energy adoption; Net Zero 2050 tracks the same renewable share as your contribution to the Sultanate's 2050 target.",
 
     assumptionsTitle: "Assumptions used",
+    oversizedNote:
+      "Your roof can host up to {max} kWp, but we recommend {rec} kWp to match your annual consumption — avoid paying for unused capacity.",
     disclaimerFootnote:
       "Not investment advice. Figures are engineering estimates — request a professional survey and licensed installer quotes before purchase.",
 
@@ -522,6 +524,8 @@ export const DICT = {
       "يعكس المؤشر 7 نسبة التغطية الشمسية للاستهلاك؛ ويجمع المؤشر 11 بين الخفض المالي والاعتماد على الطاقة النظيفة؛ بينما يقيس مؤشر الحياد الصفري 2050 مساهمة مبنيتك في الهدف الوطني للحياد الصفري.",
 
     assumptionsTitle: "الافتراضات والمعايير المحسوبة",
+    oversizedNote:
+      "يمكن لسقفك استيعاب حتى {max} ك.و.ب، ولكننا نوصي بـ {rec} ك.و.ب لمطابقة استهلاكك السنوي — تجنباً لدفع تكلفة قدرة غير مستغلة.",
     disclaimerFootnote:
       "هذه الحسابات لغرض التخطيط والاسترشاد فقط ولا تعتبر عرضاً مالياً أو تعاقدياً. احرص دائماً على طلب مسح فني ميداني وعروض من مقاولين مرخصين.",
 

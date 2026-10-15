@@ -229,16 +229,14 @@ export function RoofMap({
 
   const loadSample = useCallback(() => {
     cancelDrawing();
-    polygonRef.current = [];
-    setAreaM2(0);
-    onAreaChange(0);
+    commitPolygon(SAMPLE_POLYGON);
     const map = mapRef.current;
     if (map) {
       map.flyTo({ center: [58.538, 23.6176], zoom: 17.5, essential: true, easing: flyEase });
       detectGovernorate(58.538, 23.6176);
     }
     syncLayers();
-  }, [cancelDrawing, onAreaChange, detectGovernorate, syncLayers]);
+  }, [cancelDrawing, commitPolygon, detectGovernorate, syncLayers]);
 
   const flyTo = useCallback(
     (lng: number, lat: number, zoom = 15) => {
@@ -609,7 +607,7 @@ export function RoofMap({
 
       {/* Area readout */}
       {(areaM2 > 0 || drawing || govKey) && (
-        <div className={`absolute bottom-3 z-10 rounded-xl bg-dune-950/85 px-4 py-2.5 shadow-soft backdrop-blur ${isAr ? "left-3 text-left" : "right-3 text-right"}`}>
+        <div className={`absolute bottom-3 z-10 rounded-xl bg-dune-950/85 px-4 py-2.5 shadow-soft backdrop-blur ${isAr ? "left-3 text-left lg:left-[20rem]" : "right-3 text-right lg:right-[20rem]"}`}>
           {drawing && areaM2 === 0 ? (
             <>
               <p className="text-[10px] font-semibold uppercase tracking-wide text-dune-400">{t("tracingInProgress")}</p>

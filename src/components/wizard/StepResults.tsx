@@ -133,7 +133,13 @@ export function StepResults({
         </div>
       </div>
 
-      {e.oversizedNote && <Callout tone="warn">{e.oversizedNote}</Callout>}
+      {e.oversizedNote && (
+        <Callout tone="warn">
+          {t("oversizedNote")
+            .replace("{max}", e.roofPotentialKwp.toFixed(1))
+            .replace("{rec}", e.recommendedKwp.toFixed(1))}
+        </Callout>
+      )}
 
       {/* 3D live model */}
       <Reveal y={8}>
@@ -142,7 +148,8 @@ export function StepResults({
             panels: e.panels,
             systemKwp: e.recommendedKwp,
             roofType: e.inputs.roofType,
-            orientation: getOrientLabel(e.inputs.orientation),
+            orientation: e.inputs.orientation,
+            orientationLabel: getOrientLabel(e.inputs.orientation),
             month: e.monthly.every((m) => m.generationKwh === 0)
               ? "Estimate"
               : e.monthly.reduce((a, b) => (b.generationKwh > a.generationKwh ? b : a), e.monthly[0]).month,

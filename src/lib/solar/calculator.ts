@@ -49,6 +49,7 @@ export interface SolarInputs {
   gridEmissionFactor: number; // tCO2/MWh
   tariffEscalation: number;
   analysisYears: number;
+  locale?: "en" | "ar";
 }
 
 export interface LossBreakdown {
@@ -208,7 +209,9 @@ export function estimateSolar(inputs: SolarInputs): SolarEstimate {
   const recommendedKwp = Math.min(roofPotentialKwp, demandKwp);
   const oversizedNote =
     roofPotentialKwp > demandKwp
-      ? `Your roof can host up to ${roofPotentialKwp.toFixed(1)} kWp, but we recommend ${recommendedKwp.toFixed(1)} kWp to match your annual consumption — avoid paying for unused capacity.`
+      ? inputs.locale === "ar"
+        ? `يمكن لسقفك استيعاب حتى ${roofPotentialKwp.toFixed(1)} ك.و.ب، ولكننا نوصي بـ ${recommendedKwp.toFixed(1)} ك.و.ب لمطابقة استهلاكك السنوي — تجنباً لدفع تكلفة قدرة غير مستغلة.`
+        : `Your roof can host up to ${roofPotentialKwp.toFixed(1)} kWp, but we recommend ${recommendedKwp.toFixed(1)} kWp to match your annual consumption — avoid paying for unused capacity.`
       : null;
 
   const panelWattage = inputs.panelWattage || PANEL_WATTAGE;

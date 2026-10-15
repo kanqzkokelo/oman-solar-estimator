@@ -11,6 +11,7 @@ export interface SolarSceneData {
   systemKwp: number;
   roofType: "flat" | "sloped";
   orientation: string;
+  orientationLabel?: string;
   month: string;
 }
 
@@ -33,8 +34,21 @@ const ORIENTATION_AZIMUTH: Record<string, number> = {
   mixed: 0,
 };
 
+function normalizeOrientation(raw: string): string {
+  const s = (raw || "south").toLowerCase().trim();
+  if (s in ORIENTATION_AZIMUTH) return s;
+  if ((s.includes("east") && s.includes("west")) || s.includes("مختلط") || s.includes("شرق وغرب")) return "mixed";
+  if (s.includes("southeast") || s.includes("جنوب شرق")) return "southeast";
+  if (s.includes("southwest") || s.includes("جنوب غرب")) return "southwest";
+  if (s.includes("south") || s.includes("جنوب")) return "south";
+  if (s.includes("east") || s.includes("شرق")) return "east";
+  if (s.includes("west") || s.includes("غرب")) return "west";
+  return "south";
+}
+
 function sunPositionFor(orientation: string): [number, number, number] {
-  switch (orientation) {
+  const norm = normalizeOrientation(orientation);
+  switch (norm) {
     case "east":
       return [13, 9, 3];
     case "west":
@@ -215,11 +229,25 @@ function EnergyRing() {
   );
 }
 
+function getOrientFallbackLabel(key: string, t: (k: any) => string): string {
+  switch (key) {
+    case "south": return t("orientSouth");
+    case "southeast": return t("orientSoutheast");
+    case "southwest": return t("orientSouthwest");
+    case "east": return t("orientEast");
+    case "west": return t("orientWest");
+    case "mixed": return t("orientMixed");
+    default: return key;
+  }
+}
+
 export function SolarScene({ data }: { data: SolarSceneData }) {
   const { t, isAr } = useLanguage();
   const panels = Math.max(0, Math.min(data.panels, 240));
   const tilt = data.roofType === "sloped" ? 0.22 : 0.06;
-  const sun = useMemo(() => sunPositionFor(data.orientation), [data.orientation]);
+  const normOrientation = normalizeOrientation(data.orientation);
+  const sun = useMemo(() => sunPositionFor(normOrientation), [normOrientation]);
+  const displayOrient = data.orientationLabel ?? getOrientFallbackLabel(normOrientation, t);
 
   return (
     <div className="relative h-[340px] w-full overflow-hidden rounded-2xl bg-[#04070d] sm:h-[400px]">
@@ -256,7 +284,7 @@ export function SolarScene({ data }: { data: SolarSceneData }) {
         />
 
         <group key={`build-${panels}-${data.roofType}`}>
-          <Building tilt={tilt} panelCount={panels} orientation={data.orientation} />
+          <Building tilt={tilt} panelCount={panels} orientation={normOrientation} />
         </group>
         <EnergyRing />
         <Sun position={sun} />
@@ -286,7 +314,7 @@ export function SolarScene({ data }: { data: SolarSceneData }) {
           <span className="block text-[10px] text-dune-400">{t("dragToOrbit")}</span>
         </p>
         <span className="rounded-full bg-dune-950/70 px-2.5 py-1 text-[10px] font-medium text-dune-300 backdrop-blur">
-          {data.roofType === "sloped" ? t("slopedRoofText") : t("flatRoofText")} · {t("facing")} {data.orientation}
+          {data.roofType === "sloped" ? t("slopedRoofText") : t("flatRoofText")} · {t("facing")} {displayOrient}
         </span>
       </div>
     </div>
